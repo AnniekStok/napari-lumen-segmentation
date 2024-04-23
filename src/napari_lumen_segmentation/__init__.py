@@ -4,6 +4,7 @@ from ._custom_table_widget import ColoredTableWidget, TableWidget
 from ._histogram_widget import HistWidget
 from ._layer_dropdown import LayerDropdown
 from ._skeleton_widget import SkeletonWidget
+from ._distance_widget import DistanceWidget
 
 __all__ = (
     "AnnotateLabelsND",
@@ -11,12 +12,6 @@ __all__ = (
     "ColoredTableWidget",
     "TableWidget",
     "HistWidget",
-    "LayerDropdown"
-
-
-
-
-
-
-
+    "LayerDropdown",
+    "DistanceWidget"
 )
