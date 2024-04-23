@@ -1,17 +1,20 @@
-# napari-segmentation-correction
+# napari-lumen-segmentation
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-segmentation-correction.svg?color=green)](https://github.com/AnniekStok/napari-segmentation-correction/raw/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-segmentation-correction.svg?color=green)](https://pypi.org/project/napari-segmentation-correction)
-[![Python Version](https://img.shields.io/pypi/pyversions/napari-segmentation-correction.svg?color=green)](https://python.org)
-[![tests](https://github.com/AnniekStok/napari-segmentation-correction/workflows/tests/badge.svg)](https://github.com/AnniekStok/napari-segmentation-correction/actions)
-[![codecov](https://codecov.io/gh/AnniekStok/napari-segmentation-correction/branch/main/graph/badge.svg)](https://codecov.io/gh/AnniekStok/napari-segmentation-correction)
-[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-segmentation-correction)](https://napari-hub.org/plugins/napari-segmentation-correction)
+[![License BSD-3](https://img.shields.io/pypi/l/napari-lumen-segmentation.svg?color=green)](https://github.com/AnniekStok/napari-lumen-segmentation/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/napari-lumen-segmentation.svg?color=green)](https://pypi.org/project/napari-lumen-segmentation)
+[![Python Version](https://img.shields.io/pypi/pyversions/napari-lumen-segmentation.svg?color=green)](https://python.org)
+[![tests](https://github.com/AnniekStok/napari-lumen-segmentation/workflows/tests/badge.svg)](https://github.com/AnniekStok/napari-lumen-segmentation/actions)
+[![codecov](https://codecov.io/gh/AnniekStok/napari-lumen-segmentation/branch/main/graph/badge.svg)](https://codecov.io/gh/AnniekStok/napari-lumen-segmentation)
+[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-lumen-segmentation)](https://napari-hub.org/plugins/napari-lumen-segmentation)
 
-A basis for a napari plugin for manually correcting cell segmentation in 3D (z, y, x) or 4D (t, z, y, x) (virtual) arrays. 
+This plugin is still under development. It serves as a toolbox for segmentation and analysis of luminal structures. 
 
 The plugin heavily relies on several very useful open source packages and other napari plugins:
 - orthogonal view widget: [napari multiple viewer widget](https://github.com/napari/napari/blob/e490e5535438ab338a23b17905a1952f15a6d27a/examples/multiple_viewer_widget.py)
 - table widget: [napari-skimage-regionprops](https://github.com/haesleinhuepf/napari-skimage-regionprops)
+- geodesic distances: [DIPlib](https://diplib.org/)
+- skeleton analysis: [Skan](https://skeleton-analysis.org/stable/index.html) 
+- local thickness measurements: [localthickness](https://pypi.org/project/localthickness/)
 ----------------------------------
 
 This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
@@ -26,39 +29,37 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `napari-segmentation-correction` via [pip]:
+You can install `napari-lumen-segmentation` via [pip]:
 
 To install latest development version :
 
-    pip install git+https://github.com/AnniekStok/napari-segmentation-correction.git
+    pip install git+https://github.com/AnniekStok/napari-lumen-segmentation.git
 
 ## Usage
-This plugin aims to help you correct segmentation results. It can work with 3D arrays, 4D arrays, or 4D virtual arrays. There are several functionalities: 
-- explore label properties in a table widget
-- filter labels by size
-- select/delete labels with point layer selection
-- copy labels from a nD array with multiple segmentation options to your current label layer. For this you have to add a special labels layer for which you need to select a folder that contains subfolders for the different options. In each subfolder, there should be one 3D image per time point (or just one image if there is only one time point).
-- erode/dilate labels
-- smooth labels
 
-![](instructions/napari-ndlabelcorrection_filter_by_size.gif)
+The 'Orthogonal Views' tab shows the xy and xz views, implementing the napari multiple viewer widget: [napari multiple viewer widget](https://github.com/napari/napari/blob/e490e5535438ab338a23b17905a1952f15a6d27a/examples/multiple_viewer_widget.py)
 
-![](instructions/copy-paste_labels.gif)
+The 'Segmentation' tab aims to offer various tools for segmentation and measuring the size of the objects. The measured properties of the selected label mask can be viewed in the 'Label Plots' tab. 
 
+The 'Skeleton Analysis' tab implements skeletonization (skimage.morphology.skeletonize) of the selected label image, and displays skeleton properties ([Skan](https://skeleton-analysis.org/stable/index.html))
+![](instructions/skeletonization.gif)
 
-## Contributing
+The 'Distance Analysis' tab implements geodesic distance measurements from [DIPlib](https://diplib.org/), calculating distance maps that reflect the geodesic distance of any pixel on the 'mask' layer to pixels on the 'marker' layer. The marker can be either a Points layer or a Label layer. In case of a Label layer or a single points layer, the geodesic distance map will be added to the viewer. In case of a multi-point Points layer, the euclidean and geodesic distances from each point to each other point are calculated, and visualized in a table and plot. 
+![](instructions/geodesic_distance.gif)
 
-Contributions are very welcome. Tests can be run with [tox], please ensure
-the coverage at least stays the same before you submit a pull request.
+The 'Calculate local thickness' button serves to run the 'local_thickness' function from [localthickness](https://pypi.org/project/localthickness/) on the selected Labels layer. In the resulting image, the voxel intensity reflects the local thickness of the foreground mask. 
 
+![](instructions/local_thickness.gif)
+
+Note that voxel anisotropy is NOT taken into account here, and that all measurements are in voxels. Data should therefore be rescaled to isotropic dimensions before using this plugin. 
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari-segmentation-correction" is free and open source software
+"napari-lumen-segmentation" is free and open source software
 
 ## Issues
 
-If you encounter any problems, please [file an issue] along with a detailed description.
+If you encounter any problems, please file an issue along with a detailed description.
 
 [napari]: https://github.com/napari/napari
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
@@ -71,7 +72,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
 
-[file an issue]: https://github.com/AnniekStok/napari-segmentation-correction/issues
+[file an issue]: https://github.com/AnniekStok/napari-lumen-segmentation/issues
 
 [napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
