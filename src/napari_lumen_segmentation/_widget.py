@@ -16,7 +16,6 @@ from napari.layers import Image, Labels
 from napari_plane_sliders._plane_slider_widget import PlaneSliderWidget
 from qtpy.QtWidgets import (
     QComboBox,
-    QDoubleSpinBox,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -36,9 +35,9 @@ from skimage import measure
 from skimage.io import imread
 from skimage.segmentation import (
     expand_labels,
-    inverse_gaussian_gradient,
-    morphological_geodesic_active_contour,
 )
+from napari.utils.notifications import show_info
+import morphsnakes as ms
 
 from ._custom_table_widget import ColoredTableWidget, TableWidget
 from ._distance_widget import DistanceWidget
@@ -261,44 +260,15 @@ class AnnotateLabelsND(QWidget):
         image_calc_box.setLayout(image_calc_box_layout)
         self.segmentation_layout.addWidget(image_calc_box)
 
-        ### Compute inverse gaussian gradient
-        inv_gauss_box = QGroupBox("Inverse Gaussian Gradient")
-        inv_gauss_box_layout = QVBoxLayout()
-
-        inv_gauss_input_layout = QHBoxLayout()
-        inv_gauss_input_layout.addWidget(QLabel("Input image"))
-        self.inv_gauss_input_dropdown = LayerDropdown(self.viewer, (Image))
-        self.inv_gauss_input_dropdown.layer_changed.connect(
-            self._update_inv_gauss_input
-        )
-        inv_gauss_input_layout.addWidget(self.inv_gauss_input_dropdown)
-
-        inv_gauss_sigma_layout = QHBoxLayout()
-        inv_gauss_sigma_layout.addWidget(QLabel("Sigma"))
-        self.inv_gauss_sigma_spin = QSpinBox()
-        self.inv_gauss_sigma_spin.setMinimum(1)
-        self.inv_gauss_sigma_spin.setMaximum(50)
-        inv_gauss_sigma_layout.addWidget(self.inv_gauss_sigma_spin)
-
-        inv_gauss_btn = QPushButton("Run")
-        inv_gauss_btn.clicked.connect(self._calculate_inv_gauss)
-
-        inv_gauss_box_layout.addLayout(inv_gauss_input_layout)
-        inv_gauss_box_layout.addLayout(inv_gauss_sigma_layout)
-        inv_gauss_box_layout.addWidget(inv_gauss_btn)
-
-        inv_gauss_box.setLayout(inv_gauss_box_layout)
-        self.segmentation_layout.addWidget(inv_gauss_box)
-
-        ### Morphological geodesic active contour
-        active_contour_box = QGroupBox("Morphological Geodesic Active Contour")
+        ### Morphological snakes
+        active_contour_box = QGroupBox("Region growing (Morphological Snakes)")
         active_contour_box_layout = QVBoxLayout()
 
-        inv_gauss_layout = QHBoxLayout()
-        inv_gauss_layout.addWidget(QLabel("Edges map"))
-        self.inv_gauss_dropdown = LayerDropdown(self.viewer, (Image))
-        self.inv_gauss_dropdown.layer_changed.connect(self._update_inv_gauss)
-        inv_gauss_layout.addWidget(self.inv_gauss_dropdown)
+        int_layout = QHBoxLayout()
+        int_layout.addWidget(QLabel("Input image"))
+        self.int_input_dropdown = LayerDropdown(self.viewer, (Image))
+        self.int_input_dropdown.layer_changed.connect(self._update_int_input)
+        int_layout.addWidget(self.int_input_dropdown)
 
         seeds_layout = QHBoxLayout()
         seeds_layout.addWidget(QLabel("Label seeds"))
@@ -313,22 +283,30 @@ class AnnotateLabelsND(QWidget):
         self.num_iter_spin.setMaximum(5000)
         num_iter_layout.addWidget(self.num_iter_spin)
 
-        balloon_layout = QHBoxLayout()
-        balloon_layout.addWidget(QLabel("Balloon"))
-        self.balloon = QDoubleSpinBox()
-        self.balloon.setMinimum(-10)
-        self.balloon.setMaximum(10)
-        balloon_layout.addWidget(self.balloon)
+        lambda1_layout = QHBoxLayout()
+        lambda1_layout.addWidget(QLabel("Lambda1"))
+        self.lambda1_spin = QSpinBox()
+        self.lambda1_spin.setMinimum(1)
+        self.lambda1_spin.setMaximum(5000)
+        lambda1_layout.addWidget(self.lambda1_spin)
+
+        lambda2_layout = QHBoxLayout()
+        lambda2_layout.addWidget(QLabel("Lambda2"))
+        self.lambda2_spin = QSpinBox()
+        self.lambda2_spin.setMinimum(1)
+        self.lambda2_spin.setMaximum(5000)
+        lambda2_layout.addWidget(self.lambda2_spin)
 
         calc_active_contour_btn = QPushButton("Run")
         calc_active_contour_btn.clicked.connect(
             self._morphological_active_contour
         )
 
-        active_contour_box_layout.addLayout(inv_gauss_layout)
+        active_contour_box_layout.addLayout(int_layout)
         active_contour_box_layout.addLayout(seeds_layout)
         active_contour_box_layout.addLayout(num_iter_layout)
-        active_contour_box_layout.addLayout(balloon_layout)
+        active_contour_box_layout.addLayout(lambda1_layout)
+        active_contour_box_layout.addLayout(lambda2_layout)
         active_contour_box_layout.addWidget(calc_active_contour_btn)
 
         active_contour_box.setLayout(active_contour_box_layout)
@@ -505,23 +483,14 @@ class AnnotateLabelsND(QWidget):
             self.threshold_layer = self.viewer.layers[selected_layer]
             self.threshold_layer_dropdown.setCurrentText(selected_layer)
 
-    def _update_inv_gauss_input(self, selected_layer: str) -> None:
+    def _update_int_input(self, selected_layer: str) -> None:
         """Update the layer that is set to be the 'source labels' layer for copying labels from."""
 
         if selected_layer == "":
-            self.inv_gauss_input_layer = None
+            self.int_input_layer = None
         else:
-            self.inv_gauss_input_layer = self.viewer.layers[selected_layer]
-            self.inv_gauss_input_dropdown.setCurrentText(selected_layer)
-
-    def _update_inv_gauss(self, selected_layer: str) -> None:
-        """Update the layer that is set to be the 'source labels' layer for copying labels from."""
-
-        if selected_layer == "":
-            self.inv_gauss_layer = None
-        else:
-            self.inv_gauss_layer = self.viewer.layers[selected_layer]
-            self.inv_gauss_dropdown.setCurrentText(selected_layer)
+            self.int_input_layer = self.viewer.layers[selected_layer]
+            self.int_input_dropdown.setCurrentText(selected_layer)
 
     def _update_seeds(self, selected_layer: str) -> None:
         """Update the layer that is set to be the 'source labels' layer for copying labels from."""
@@ -1269,30 +1238,19 @@ class AnnotateLabelsND(QWidget):
                 ).astype(int)
             )
 
-    def _calculate_inv_gauss(self) -> None:
-        """Calculate inverse gaussian gradient"""
-        if isinstance(self.inv_gauss_input_layer, da.core.Array) or isinstance(
-            self.seeds_layer, da.core.Array
-        ):
-            msg = QMessageBox()
-            msg.setWindowTitle("Please convert to an in memory array")
-            msg.setText("Please convert to an in memory array")
-            msg.setIcon(QMessageBox.Information)
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
-            return False
-
-        self.viewer.add_image(
-            inverse_gaussian_gradient(
-                np.array(self.inv_gauss_input_layer.data, dtype=np.float32),
-                sigma=self.inv_gauss_sigma_spin.value(),
-            )
-        )
+    def status_callback(self):
+        """Count the number of iterations processed"""
+        
+        def callback(levelset):      
+            print("Iteration", self.counter, 'out of', self.num_iter_spin.value())
+            show_info("Iteration " + str(self.counter) + ' out of ' + str(self.num_iter_spin.value()))
+            self.counter += 1
+        return callback
 
     def _morphological_active_contour(self) -> None:
         """Run morphological active contour algorithm"""
 
-        if isinstance(self.inv_gauss_input_layer, da.core.Array) or isinstance(
+        if isinstance(self.int_input_layer, da.core.Array) or isinstance(
             self.seeds_layer, da.core.Array
         ):
             msg = QMessageBox()
@@ -1302,7 +1260,7 @@ class AnnotateLabelsND(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
             return False
-        if self.inv_gauss_layer.data.shape != self.seeds_layer.data.shape:
+        if self.int_input_layer.data.shape != self.seeds_layer.data.shape:
             msg = QMessageBox()
             msg.setWindowTitle("Images must have the same shape")
             msg.setText("Images must have the same shape")
@@ -1311,11 +1269,10 @@ class AnnotateLabelsND(QWidget):
             msg.exec_()
             return False
 
+        self.counter = 0
+        callback = self.status_callback()
         self.viewer.add_labels(
-            morphological_geodesic_active_contour(
-                self.inv_gauss_layer.data,
-                init_level_set=self.seeds_layer.data,
-                num_iter=self.num_iter_spin.value(),
-                balloon=self.balloon.value(),
-            )
+            ms.morphological_chan_vese(self.int_input_layer.data, iterations=self.num_iter_spin.value(),
+                               init_level_set=self.seeds_layer.data,
+                               smoothing=0, lambda1=self.lambda1_spin.value(), lambda2=self.lambda2_spin.value(), iter_callback=callback)
         )
