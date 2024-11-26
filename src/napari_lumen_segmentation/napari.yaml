@@ -5,7 +5,7 @@ categories: ["Annotation", "Segmentation"]
 contributions:
   commands:
     - id: napari-lumen-segmentation.lumensegmentation
-      python_name: napari_lumen_segmentation._widget:LumenSegmentationWidget
+      python_name: napari_lumen_segmentation.main_widget:LumenSegmentationWidget
       title: Lumen Segmentation Toolbox
   widgets:
     - command: napari-lumen-segmentation.lumensegmentation

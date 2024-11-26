@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from .layer_dropdown import LayerDropdown
+from ..layer_selection.layer_dropdown import LayerDropdown
 
 ICON_ROOT = Path(__file__).parent / "icons"
 

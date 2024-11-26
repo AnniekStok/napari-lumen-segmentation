@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import (
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-ICON_ROOT = "src/icons"
+ICON_ROOT = os.path.join(os.path.dirname(__file__), "icons")
 
 
 class PlotWidget(QWidget):

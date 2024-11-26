@@ -14,9 +14,9 @@ from qtpy.QtWidgets import (
 )
 from skimage import morphology
 
-from .plot_widget import PlotWidget
-from .custom_table_widget import CustomTableWidget
-from .layer_manager import LayerManager
+from ..layer_selection.layer_manager import LayerManager
+from ..plots.plot_widget import PlotWidget
+from ..tables.custom_table_widget import CustomTableWidget
 
 
 class SkeletonWidget(QScrollArea):

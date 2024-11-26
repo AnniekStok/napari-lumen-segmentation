@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
 )
 from skimage.io import imread
 
-from .layer_dropdown import LayerDropdown
+from ..layer_selection.layer_dropdown import LayerDropdown
 
 
 class ThresholdWidget(QWidget):

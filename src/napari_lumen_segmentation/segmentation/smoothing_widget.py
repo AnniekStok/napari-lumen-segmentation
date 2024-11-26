@@ -16,11 +16,12 @@ from qtpy.QtWidgets import (
     QSpinBox,
     QVBoxLayout,
     QWidget,
+    QFileDialog,
 )
 from scipy import ndimage
 from skimage.io import imread
 
-from .layer_manager import LayerManager
+from ..layer_selection.layer_manager import LayerManager
 
 
 class SmoothingWidget(QWidget):
@@ -70,13 +71,15 @@ class SmoothingWidget(QWidget):
 
         if isinstance(self.label_manager.selected_layer.data, da.core.Array):
             if self.outputdir is None:
-                msg = QMessageBox()
-                msg.setWindowTitle("No output directory selected")
-                msg.setText("Please specify an output directory first!")
-                msg.setIcon(QMessageBox.Information)
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec_()
-                return False
+                self.outputdir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+
+                outputdir = os.path.join(
+                    self.outputdir,
+                    (self.label_manager.selected_layer.name + "_smoothed"),
+                )
+                if os.path.exists(outputdir):
+                    shutil.rmtree(outputdir)
+                os.mkdir(outputdir)
 
             else:
                 outputdir = os.path.join(
@@ -87,46 +90,46 @@ class SmoothingWidget(QWidget):
                     shutil.rmtree(outputdir)
                 os.mkdir(outputdir)
 
-                for i in range(
-                    self.label_manager.selected_layer.data.shape[0]
-                ):  # Loop over the first dimension
-                    current_stack = self.label_manager.selected_layer.data[
-                        i
-                    ].compute()  # Compute the current stack
-                    # Apply smoothing using median filter
-                    smoothed = ndimage.median_filter(
-                            input_data,
-                            size=self.median_radius_field.value(),
-                        )
-
-                    # combine smoothed result with original result to selectively grow the mask
-                    input_data = np.logical_or(smoothed != 0, input_data != 0).astype(int)
-
-                    tifffile.imwrite(
-                        os.path.join(
-                            outputdir,
-                            (
-                                self.label_manager.selected_layer.name
-                                + "_smoothed_TP"
-                                + str(i).zfill(4)
-                                + ".tif"
-                            ),
-                        ),
-                        np.array(input_data, dtype="uint16"),
+            for i in range(
+                self.label_manager.selected_layer.data.shape[0]
+            ):  # Loop over the first dimension
+                current_stack = self.label_manager.selected_layer.data[
+                    i
+                ].compute()  # Compute the current stack
+                # Apply smoothing using median filter
+                smoothed = ndimage.median_filter(
+                        current_stack,
+                        size=self.median_radius_field.value(),
                     )
 
-                file_list = [
-                    os.path.join(outputdir, fname)
-                    for fname in os.listdir(outputdir)
-                    if fname.endswith(".tif")
-                ]
-                self.label_manager.selected_layer = self.viewer.add_labels(
-                    da.stack([imread(fname) for fname in sorted(file_list)]),
-                    name=self.label_manager.selected_layer.name + "_smoothed",
+                # combine smoothed result with original result to selectively grow the mask
+                input_data = np.logical_or(smoothed != 0, current_stack != 0).astype(int)
+
+                tifffile.imwrite(
+                    os.path.join(
+                        outputdir,
+                        (
+                            self.label_manager.selected_layer.name
+                            + "_smoothed_TP"
+                            + str(i).zfill(4)
+                            + ".tif"
+                        ),
+                    ),
+                    np.array(input_data, dtype="uint16"),
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
-                )
+
+            file_list = [
+                os.path.join(outputdir, fname)
+                for fname in os.listdir(outputdir)
+                if fname.endswith(".tif")
+            ]
+            self.label_manager.selected_layer = self.viewer.add_labels(
+                da.stack([imread(fname) for fname in sorted(file_list)]),
+                name=self.label_manager.selected_layer.name + "_smoothed",
+            )
+            self.label_manager._update_labels(
+                self.label_manager.selected_layer.name
+            )
 
         else:
             if len(self.label_manager.selected_layer.data.shape) == 4:
@@ -136,13 +139,12 @@ class SmoothingWidget(QWidget):
                 ):
                     # Apply smoothing using median filter
                     smoothed = ndimage.median_filter(
-                            input_data,
+                            self.label_manager.selected_layer.data[i],
                             size=self.median_radius_field.value(),
                         )
 
                     # combine smoothed result with original result to selectively grow the mask
-                    input_data = np.logical_or(smoothed != 0, input_data != 0).astype(int)
-
+                    input_data = np.logical_or(smoothed != 0, self.label_manager.selected_layer.data[i] != 0).astype(int)
                     stack.append(input_data)
                 self.label_manager.selected_layer = self.viewer.add_labels(
                     np.stack(stack, axis=0),

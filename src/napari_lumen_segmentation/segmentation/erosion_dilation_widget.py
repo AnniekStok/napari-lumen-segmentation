@@ -20,7 +20,7 @@ from scipy.ndimage import binary_erosion
 from skimage.io import imread
 from skimage.segmentation import expand_labels
 
-from .layer_manager import LayerManager
+from ..layer_selection.layer_manager import LayerManager
 
 
 class ErosionDilationWidget(QWidget):

@@ -1,11 +1,7 @@
 import dask.array as da
 import napari
 import numpy as np
-from qtpy.QtWidgets import (
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from qtpy.QtWidgets import QGroupBox, QPushButton, QVBoxLayout, QWidget
 
 from .layer_dropdown import LayerDropdown
 
@@ -32,9 +28,15 @@ class LayerManager(QWidget):
         )
         self.convert_to_array_btn.clicked.connect(self._convert_to_array)
 
+        box = QGroupBox("Selected Labels Layer")
+        widget_layout = QVBoxLayout()
+        widget_layout.addWidget(self.label_dropdown)
+        widget_layout.addWidget(self.convert_to_array_btn)
+        box.setLayout(widget_layout)
+
         layout = QVBoxLayout()
-        layout.addWidget(self.label_dropdown)
-        layout.addWidget(self.convert_to_array_btn)
+        layout.addWidget(box)
+
         self.setLayout(layout)
 
     @property

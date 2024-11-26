@@ -19,10 +19,10 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
 )
 
+from ..layer_selection.layer_dropdown import LayerDropdown
+from ..layer_selection.layer_manager import LayerManager
+from ..tables.custom_table_widget import CustomTableWidget
 from .histogram_widget import HistWidget
-from .custom_table_widget import CustomTableWidget
-from .layer_dropdown import LayerDropdown
-from .layer_manager import LayerManager
 
 
 class DistanceWidget(QScrollArea):

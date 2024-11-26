@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
 )
 from skimage.morphology import reconstruction
 
-from .layer_dropdown import LayerDropdown
+from ..layer_selection.layer_dropdown import LayerDropdown
 
 
 class MorphReconstructionWidget(QWidget):

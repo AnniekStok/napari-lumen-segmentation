@@ -20,7 +20,7 @@ from qtpy.QtWidgets import (
 from skimage import measure
 from skimage.io import imread
 
-from .layer_manager import LayerManager
+from ..layer_selection.layer_manager import LayerManager
 
 
 class SizeFilterWidget(QWidget):
@@ -36,7 +36,7 @@ class SizeFilterWidget(QWidget):
         self.outputdir = None
 
         filterbox = QGroupBox("Filter objects by size")
-        
+
         min_size_layout = QVBoxLayout()
         min_size_layout.addWidget(QLabel('min size (voxels)'))
         self.min_size_field = QSpinBox()

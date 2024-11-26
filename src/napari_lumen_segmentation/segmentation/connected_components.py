@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (
 from skimage.io import imread
 from skimage.measure import label
 
-from .layer_manager import LayerManager
+from ..layer_selection.layer_manager import LayerManager
 
 
 class ConnectedComponents(QWidget):
@@ -46,6 +46,7 @@ class ConnectedComponents(QWidget):
         self.setLayout(main_layout)
 
     def _conn_comp_2d(self):
+        """Run conncomp for a 3D (slice by slice) or 2D image"""
 
         conncomp = np.zeros_like(self.label_manager.selected_layer.data)
 
@@ -60,7 +61,7 @@ class ConnectedComponents(QWidget):
         )
 
     def _conn_comp(self):
-        """Run connected component analysis to (re) label the labels array"""
+        """Run connected component analysis to (re)label the labels array"""
 
         if isinstance(self.label_manager.selected_layer.data, da.core.Array):
             if self.outputdir is None:
