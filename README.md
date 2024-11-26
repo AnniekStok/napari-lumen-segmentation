@@ -31,19 +31,34 @@ https://napari.org/stable/plugins/index.html
 
 You can install `napari-lumen-segmentation` via [pip]:
 
-To install latest development version :
-
     pip install git+https://github.com/AnniekStok/napari-lumen-segmentation.git
 
 ## Usage
 
-The 'Orthogonal Views' tab shows the xy and xz views, implementing the napari multiple viewer widget: [napari multiple viewer widget](https://github.com/napari/napari/blob/e490e5535438ab338a23b17905a1952f15a6d27a/examples/multiple_viewer_widget.py)
+### Plane viewing
+The 'Plane Viewing' tab implements viewing of planes and clipping planes in the 3D viewing mode.
 
-The 'Segmentation' tab aims to offer various tools for segmentation and measuring the size of the objects. The measured properties of the selected label mask can be viewed in the 'Label Plots' tab. 
+![](instructions/plane_viewing.gif)
 
+### Manual segmentation correction
+The 'Segmentation' tab aims to offer various tools for manual correction of a segmentation result, including: 
+- connected component labeling in 2D and 3D
+- filtering objects by size (measured properties can be viewed in an napari_skimage_regionprops based table and plot in the Label Plots tab)
+- erosion and dilation of labels
+- applying an intensity threshold to image and labels layers
+- mathematical operations between two image/label layers
+- median filter 
+- median filter based smoothing of label layers
+- morphological reconstruction by dilation
+
+![](instructions/morph_reconst.gif)
+
+### Skeleton Analysis
 The 'Skeleton Analysis' tab implements skeletonization (skimage.morphology.skeletonize) of the selected label image, and displays skeleton properties ([Skan](https://skeleton-analysis.org/stable/index.html))
+
 ![](instructions/skeletonization.gif)
 
+### Distance Analysis
 The 'Distance Analysis' tab implements geodesic distance measurements from [DIPlib](https://diplib.org/), calculating distance maps that reflect the geodesic distance of any pixel on the 'mask' layer to pixels on the 'marker' layer. The marker can be either a Points layer or a Label layer. In case of a Label layer or a single points layer, the geodesic distance map will be added to the viewer. In case of a multi-point Points layer, the euclidean and geodesic distances from each point to each other point are calculated, and visualized in a table and plot. 
 ![](instructions/geodesic_distance.gif)
 

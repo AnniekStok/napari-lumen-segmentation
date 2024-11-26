@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (
 
 
 class ColoredTableWidget(TableWidget):
-    """Customized table widget based on the napari_skimage_regionprops TableWidget"""
+    """Customized table widget derived from the napari_skimage_regionprops TableWidget"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,10 +75,9 @@ class ColoredTableWidget(TableWidget):
         self._set_label_colors_to_rows()
 
 
-class TableWidget(QWidget):
+class CustomTableWidget(QWidget):
     """
-    The table widget represents a table inside napari.
-    Tables are just views on `properties` of `layers`.
+    Custom table widget based on the napari_skimage_regionprops TableWdiget
     """
 
     def __init__(
@@ -101,6 +100,7 @@ class TableWidget(QWidget):
             self.props = props.to_dict(orient="list")
         self.set_content(self.props)
 
+        # copy from napari_skimage_regionprops
         copy_button = QPushButton("Copy to clipboard")
         copy_button.clicked.connect(self._copy_clicked)
 

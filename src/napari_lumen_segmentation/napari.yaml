@@ -1,12 +1,12 @@
 name: napari-lumen-segmentation
-display_name: Manual Segmentation Correction
+display_name: Lumen Segmentation and Analysis Toolbox
 visibility: public
 categories: ["Annotation", "Segmentation"]
 contributions:
   commands:
-    - id: napari-lumen-segmentation.annotateND
-      python_name: napari_lumen_segmentation._widget:AnnotateLabelsND
+    - id: napari-lumen-segmentation.lumensegmentation
+      python_name: napari_lumen_segmentation._widget:LumenSegmentationWidget
       title: Lumen Segmentation Toolbox
   widgets:
-    - command: napari-lumen-segmentation.annotateND
+    - command: napari-lumen-segmentation.lumensegmentation
       display_name: Lumen Segmentation Toolbox

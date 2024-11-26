@@ -4,7 +4,6 @@ import napari
 import numpy as np
 import pandas as pd
 import skan
-from napari.layers import Labels
 from qtpy.QtWidgets import (
     QComboBox,
     QGroupBox,
@@ -15,16 +14,17 @@ from qtpy.QtWidgets import (
 )
 from skimage import morphology
 
-from ._custom_table_widget import TableWidget
-from ._plot_widget import PlotWidget
+from .plot_widget import PlotWidget
+from .custom_table_widget import CustomTableWidget
+from .layer_manager import LayerManager
 
 
 class SkeletonWidget(QScrollArea):
 
-    def __init__(self, viewer: napari.Viewer, labels: Labels):
+    def __init__(self, viewer: napari.Viewer, label_manager: LayerManager):
         super().__init__()
         self.viewer = viewer
-        self.labels = labels
+        self.label_manager = label_manager
 
         ### Skeleton analysis widget
         self.analysis_layout = QVBoxLayout()
@@ -52,7 +52,7 @@ class SkeletonWidget(QScrollArea):
 
         self.analysis_layout.addWidget(skeleton_box)
 
-        self.table_widget = TableWidget(props=pd.DataFrame())
+        self.table_widget = CustomTableWidget(props=pd.DataFrame())
         self.plot_widget = PlotWidget(props=pd.DataFrame())
 
         self.analysis_layout.addWidget(self.table_widget)
@@ -67,7 +67,7 @@ class SkeletonWidget(QScrollArea):
     def _skeletonize(self) -> None:
         """Create skeleton from label image"""
 
-        skel = morphology.skeletonize(self.labels.data)
+        skel = morphology.skeletonize(self.label_manager.selected_layer.data)
         degree_image = skan.csr.make_degree_image(skel)
 
         self.viewer.add_labels(degree_image, name="Connectivity")

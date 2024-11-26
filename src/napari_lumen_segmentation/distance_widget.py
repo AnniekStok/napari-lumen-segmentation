@@ -19,17 +19,18 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
 )
 
-from ._custom_table_widget import TableWidget
-from ._histogram_widget import HistWidget
-from ._layer_dropdown import LayerDropdown
+from .histogram_widget import HistWidget
+from .custom_table_widget import CustomTableWidget
+from .layer_dropdown import LayerDropdown
+from .layer_manager import LayerManager
 
 
 class DistanceWidget(QScrollArea):
 
-    def __init__(self, viewer: napari.Viewer, labels: Labels):
+    def __init__(self, viewer: napari.Viewer, label_manager: LayerManager):
         super().__init__()
         self.viewer = viewer
-        self.labels = labels
+        self.label_manager = label_manager
 
         distance_analysis_layout = QVBoxLayout()
 
@@ -89,7 +90,7 @@ class DistanceWidget(QScrollArea):
 
         ### euclidean and geodesic distance measurements
         distance_measurement_box = QGroupBox("Distance measurements")
-        self.table_widget = TableWidget(props=pd.DataFrame())
+        self.table_widget = CustomTableWidget(props=pd.DataFrame())
         distance_measurement_layout = QHBoxLayout()
         distance_measurement_layout.addWidget(self.table_widget)
         distance_measurement_box.setLayout(distance_measurement_layout)
@@ -280,5 +281,5 @@ class DistanceWidget(QScrollArea):
         """Calculates local thickness of label image and adds the image to the viewer"""
 
         self.viewer.add_image(
-            lt.local_thickness(self.labels.data), colormap="magma"
+            lt.local_thickness(self.label_manager.selected_layer.data), colormap="magma"
         )

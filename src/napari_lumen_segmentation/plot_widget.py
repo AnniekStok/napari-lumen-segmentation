@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import (
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-ICON_ROOT = Path(__file__).parent / "icons"
+ICON_ROOT = "src/icons"
 
 
 class PlotWidget(QWidget):
