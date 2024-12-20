@@ -18,12 +18,13 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
 )
+from scipy.spatial import KDTree
 
 from ..layer_selection.layer_dropdown import LayerDropdown
 from ..layer_selection.layer_manager import LayerManager
 from ..tables.custom_table_widget import CustomTableWidget
 from .histogram_widget import HistWidget
-from scipy.spatial import KDTree
+
 
 class DistanceWidget(QScrollArea):
 
@@ -146,7 +147,7 @@ class DistanceWidget(QScrollArea):
         else:
             self.points_layer = self.viewer.layers[selected_layer]
             self.points_dropdown.setCurrentText(selected_layer)
-    
+
     def _update_mask(self, selected_layer: str) -> None:
         """Set the mask layer for mapping points to mask image"""
 
@@ -155,7 +156,7 @@ class DistanceWidget(QScrollArea):
         else:
             self.mask_layer = self.viewer.layers[selected_layer]
             self.mask_dropdown.setCurrentText(selected_layer)
-    
+
     def _map_points_to_mask(self):
         """Map points to closest point on mask image"""
 

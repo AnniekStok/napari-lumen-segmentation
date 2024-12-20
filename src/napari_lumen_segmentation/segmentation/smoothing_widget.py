@@ -8,15 +8,14 @@ import numpy as np
 import tifffile
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
+    QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QSpinBox,
     QVBoxLayout,
     QWidget,
-    QFileDialog,
 )
 from scipy import ndimage
 from skimage.io import imread
