@@ -23,7 +23,7 @@ from ..layer_selection.layer_dropdown import LayerDropdown
 from ..layer_selection.layer_manager import LayerManager
 from ..tables.custom_table_widget import CustomTableWidget
 from .histogram_widget import HistWidget
-
+from scipy.spatial import KDTree
 
 class DistanceWidget(QScrollArea):
 
@@ -96,9 +96,74 @@ class DistanceWidget(QScrollArea):
         distance_measurement_box.setLayout(distance_measurement_layout)
         distance_analysis_layout.addWidget(distance_measurement_box)
 
+        ### Map points to closest point on mask image
+        points_to_mask_box = QGroupBox("Map points to closest point on mask image")
+        points_to_mask_box_layout = QVBoxLayout()
+
+        points_layout = QHBoxLayout()
+        points_layout.addWidget(QLabel("Points"))
+        self.points_dropdown = LayerDropdown(
+            self.viewer, (Points)
+        )
+        self.points_dropdown.layer_changed.connect(
+            self._update_points
+        )
+        points_layout.addWidget(
+            self.points_dropdown
+        )
+
+        mask_layout = QHBoxLayout()
+        mask_layout.addWidget(QLabel("Mask"))
+        self.mask_dropdown = LayerDropdown(
+            self.viewer, (Labels)
+        )
+        self.mask_dropdown.layer_changed.connect(
+            self._update_mask
+        )
+        mask_layout.addWidget(
+            self.mask_dropdown
+        )
+
+        map_points_to_mask_btn = QPushButton("Run")
+        map_points_to_mask_btn.clicked.connect(self._map_points_to_mask)
+
+        points_to_mask_box_layout.addLayout(points_layout)
+        points_to_mask_box_layout.addLayout(mask_layout)
+        points_to_mask_box_layout.addWidget(map_points_to_mask_btn)
+
+        points_to_mask_box.setLayout(points_to_mask_box_layout)
+        distance_analysis_layout.addWidget(points_to_mask_box)
+
         # Set main layout
         self.setLayout(distance_analysis_layout)
         self.setWidgetResizable(True)
+
+    def _update_points(self, selected_layer: str) -> None:
+        """Set the points layer for mapping to mask image"""
+
+        if selected_layer == "":
+            self.points_layer = None
+        else:
+            self.points_layer = self.viewer.layers[selected_layer]
+            self.points_dropdown.setCurrentText(selected_layer)
+    
+    def _update_mask(self, selected_layer: str) -> None:
+        """Set the mask layer for mapping points to mask image"""
+
+        if selected_layer == "":
+            self.mask_layer = None
+        else:
+            self.mask_layer = self.viewer.layers[selected_layer]
+            self.mask_dropdown.setCurrentText(selected_layer)
+    
+    def _map_points_to_mask(self):
+        """Map points to closest point on mask image"""
+
+        mask_coords = np.array(np.nonzero(self.mask_layer.data)).T
+        mask_kdtree = KDTree(mask_coords)
+        _, indices = mask_kdtree.query(self.points_layer.data)
+        nearest_points = mask_coords[indices]
+        self.viewer.add_points(nearest_points, name="Nearest Points on Mask", face_color='green')
 
     def _update_geodesic_distmap_mask(self, selected_layer: str) -> None:
         """Set the mask layer for geodesic distance map calculation"""
