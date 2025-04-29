@@ -27,32 +27,42 @@ class MorphReconstructionWidget(QWidget):
         box_layout = QVBoxLayout()
 
         int_layout = QHBoxLayout()
-        int_layout.addWidget(QLabel("Input image"))
+        input_image_label = QLabel("Input image")
+        input_image_label.setToolTip("Intensity image to apply threshold on before reconstruction")
+        int_layout.addWidget(input_image_label)
         self.int_input_dropdown = LayerDropdown(self.viewer, (Image))
         self.int_input_dropdown.layer_changed.connect(self._update_int_input)
         int_layout.addWidget(self.int_input_dropdown)
 
         seeds_layout = QHBoxLayout()
-        seeds_layout.addWidget(QLabel("Seed labels"))
+        seeds_label = QLabel("Region to expand")
+        seeds_label.setToolTip("(Lumen) segmentation mask to be expanded")
+        seeds_layout.addWidget(seeds_label)
         self.seeds_dropdown = LayerDropdown(self.viewer, (Labels))
         self.seeds_dropdown.layer_changed.connect(self._update_seeds)
         seeds_layout.addWidget(self.seeds_dropdown)
 
-        exclude_layout = QHBoxLayout()
-        exclude_layout.addWidget(QLabel("Mask"))
-        self.exclude_dropdown = LayerDropdown(self.viewer, (Labels))
-        self.exclude_dropdown.layer_changed.connect(self._update_exclude)
-        exclude_layout.addWidget(self.exclude_dropdown)
+        mask_layout = QHBoxLayout()
+        mask_label = QLabel("Mask region to expand into")
+        mask_label.setToolTip("Mask region to expand into. Use different label values to provide multiple local masks for reconstruction.")
+        mask_layout.addWidget(mask_label)
+        self.mask_dropdown = LayerDropdown(self.viewer, (Labels))
+        self.mask_dropdown.layer_changed.connect(self._update_mask)
+        mask_layout.addWidget(self.mask_dropdown)
 
         min_threshold_layout = QHBoxLayout()
-        min_threshold_layout.addWidget(QLabel("Threshold (min internal value)"))
+        min_threshold_label = QLabel("Min threshold")
+        min_threshold_label.setToolTip("Min internal (lumen) value")
+        min_threshold_layout.addWidget(min_threshold_label)
         self.min_threshold = QDoubleSpinBox()
         self.min_threshold.setMinimum(0)
         self.min_threshold.setMaximum(65535)
         min_threshold_layout.addWidget(self.min_threshold)
 
         max_threshold_layout = QHBoxLayout()
-        max_threshold_layout.addWidget(QLabel("Threshold (max internal value)"))
+        max_threshold_label = QLabel("Max threshold")
+        max_threshold_label.setToolTip("Max internal (lumen) value")
+        max_threshold_layout.addWidget(max_threshold_label)
         self.max_threshold = QDoubleSpinBox()
         self.max_threshold.setMinimum(0)
         self.max_threshold.setMaximum(65535)
@@ -65,7 +75,7 @@ class MorphReconstructionWidget(QWidget):
 
         box_layout.addLayout(int_layout)
         box_layout.addLayout(seeds_layout)
-        box_layout.addLayout(exclude_layout)
+        box_layout.addLayout(mask_layout)
         box_layout.addLayout(min_threshold_layout)
         box_layout.addLayout(max_threshold_layout)
         box_layout.addWidget(run_region_growing_btn)
@@ -93,14 +103,14 @@ class MorphReconstructionWidget(QWidget):
             self.seeds_layer = self.viewer.layers[selected_layer]
             self.seeds_dropdown.setCurrentText(selected_layer)
 
-    def _update_exclude(self, selected_layer: str) -> None:
-        """Update the exclude label layer (forbidden regions)"""
+    def _update_mask(self, selected_layer: str) -> None:
+        """Update the mask label layer (region to expand into)"""
 
         if selected_layer == "":
             self.mask = None
         else:
             self.mask = self.viewer.layers[selected_layer]
-            self.exclude_dropdown.setCurrentText(selected_layer)
+            self.mask_dropdown.setCurrentText(selected_layer)
 
     def _morphological_reconstruction(self) -> None:
         """Run custom region growing algorithm"""
