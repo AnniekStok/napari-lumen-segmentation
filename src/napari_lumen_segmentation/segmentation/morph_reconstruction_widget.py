@@ -9,6 +9,7 @@ from qtpy.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QMessageBox,
 )
 from skimage.morphology import reconstruction
 
@@ -104,6 +105,16 @@ class MorphReconstructionWidget(QWidget):
     def _morphological_reconstruction(self) -> None:
         """Run custom region growing algorithm"""
 
+        # do not execute if the two layers are the same
+        if self.seeds_layer == self.mask:
+            msg = QMessageBox()
+            msg.setWindowTitle("Seeds and mask layers are the same. Please select different layers.")
+            msg.setText("Seeds and mask layers are the same. Please select different layers. The seeds layer is the lumen that you are trying to correct. The mask should be a labels layer with one or more regions to expand into.")
+            msg.setIcon(QMessageBox.Information)
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+            return 
+   
         updated_seeds = self.seeds_layer.data.copy() > 0
         
         region_labels = np.unique(self.mask.data)
