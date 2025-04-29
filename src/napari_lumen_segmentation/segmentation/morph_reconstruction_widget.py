@@ -104,12 +104,38 @@ class MorphReconstructionWidget(QWidget):
     def _morphological_reconstruction(self) -> None:
         """Run custom region growing algorithm"""
 
-        # define a mask of pixels that fulfill both the threshold criteria and are in the 'mask' layer
-        mask = (self.region_growing_int_layer.data >= self.min_threshold.value()) & (self.region_growing_int_layer.data <= self.max_threshold.value()) & (self.mask.data > 0)
-        seeds = (self.seeds_layer.data > 0) & (mask > 0)
+        updated_seeds = self.seeds_layer.data.copy() > 0
+        
+        region_labels = np.unique(self.mask.data)
+        region_labels = [l for l in region_labels if l > 0]
+        for label in region_labels:
 
-        reconst = reconstruction(seeds * 1, mask * 2)
-        result = np.logical_or(self.seeds_layer.data > 0, reconst > 0).astype(int)
+            # define a mask of pixels that fulfill both the threshold criteria and are in the 'mask' layer
+            mask = (self.region_growing_int_layer.data >= self.min_threshold.value()) & (self.region_growing_int_layer.data <= self.max_threshold.value()) & (self.mask.data == label)
+            
+            # Find the bounding box of the non-zero pixels in the mask
+            non_zero_coords = np.argwhere(mask)
+            if non_zero_coords.size == 0:
+                print("No valid region found in the mask.")
+                return
 
-        self.seeds_layer = self.viewer.add_labels(result, name = "morphological reconstruction")
+            min_coords = non_zero_coords.min(axis=0)
+            max_coords = non_zero_coords.max(axis=0) + 1  # Add 1 to include the max boundary
+
+            # Clip the mask and seeds to the bounding box
+            clipped_mask = mask[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]]
+            seeds = (self.seeds_layer.data > 0) & (mask > 0)
+            clipped_seeds = seeds[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]]
+
+            # Run the reconstruction function on the clipped data
+            reconst = reconstruction(clipped_seeds.astype(int), clipped_mask.astype(int))
+            result = np.logical_or(clipped_seeds, reconst > 0).astype(bool)
+
+            # Put the updated pixels in the updated_seeds array
+            updated_seeds[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]] |= result
+
+        # Add the updated seeds layer to the viewer
+        self.seeds_layer = self.viewer.add_labels(updated_seeds, name="morphological reconstruction")
         self.seeds_dropdown.setCurrentText("morphological reconstruction")
+       
+
