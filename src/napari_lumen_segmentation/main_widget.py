@@ -4,7 +4,6 @@ Napari plugin widget for editing N-dimensional label data
 
 
 import napari
-from napari_plane_sliders._plane_slider_widget import PlaneSliderWidget
 from qtpy.QtWidgets import (
     QTabWidget,
     QVBoxLayout,
@@ -15,6 +14,7 @@ from .distance.distance_widget import DistanceWidget
 from .layer_selection.layer_manager import LayerManager
 from .segmentation.widget import SegmentationWidgets
 from .skeleton.skeleton_widget import SkeletonWidget
+from .view3D import View3D
 
 
 class LumenSegmentationWidget(QWidget):
@@ -26,9 +26,9 @@ class LumenSegmentationWidget(QWidget):
         tab_widget = QTabWidget(self)
         self.layer_manager = LayerManager(self.viewer)
 
-        ## add plane viewing widget
-        plane_widget = PlaneSliderWidget(self.viewer)
-        tab_widget.addTab(plane_widget, "Plane Viewing")
+        ## add 3D viewing widget
+        view_3D_widget = View3D(self.viewer)
+        tab_widget.addTab(view_3D_widget, "3D Viewing")
 
         ## add combined segmentation widgets and layer manager
         segmentation_layout = QVBoxLayout()
