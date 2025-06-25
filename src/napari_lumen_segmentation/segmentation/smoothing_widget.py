@@ -102,7 +102,9 @@ class SmoothingWidget(QWidget):
                     )
 
                 # combine smoothed result with original result to selectively grow the mask
-                input_data = np.logical_or(smoothed != 0, current_stack != 0).astype(int)
+                mask = (smoothed != 0) & (current_stack == 0)
+                result = current_stack.copy()
+                result[mask] = smoothed[mask]
 
                 tifffile.imwrite(
                     os.path.join(
@@ -114,7 +116,7 @@ class SmoothingWidget(QWidget):
                             + ".tif"
                         ),
                     ),
-                    np.array(input_data, dtype="uint16"),
+                    np.array(result, dtype="uint16"),
                 )
 
             file_list = [
@@ -143,8 +145,11 @@ class SmoothingWidget(QWidget):
                         )
 
                     # combine smoothed result with original result to selectively grow the mask
-                    input_data = np.logical_or(smoothed != 0, self.label_manager.selected_layer.data[i] != 0).astype(int)
-                    stack.append(input_data)
+                    mask = (smoothed != 0) & (self.label_manager.selected_layer.data[i] == 0)
+                    result = copy.deepcopy(self.label_manager.selected_layer.data[i])
+                    result[mask] = smoothed[mask]
+
+                    stack.append(result)
                 self.label_manager.selected_layer = self.viewer.add_labels(
                     np.stack(stack, axis=0),
                     name=self.label_manager.selected_layer.name + "_smoothed",
@@ -165,7 +170,8 @@ class SmoothingWidget(QWidget):
                         )
 
                     # combine smoothed result with original result to selectively grow the mask
-                    input_data = np.logical_or(smoothed != 0, input_data != 0).astype(int)
+                    mask = (input_data == 0) & (smoothed != 0)                   
+                    input_data[mask] = smoothed[mask]
 
                 self.label_manager.selected_layer = self.viewer.add_labels(
                     input_data,
