@@ -50,15 +50,6 @@ class SegmentationWidgets(QWidget):
         segmentation_layout = QVBoxLayout()
         self.outputdir = None
 
-        ### specify output directory
-        outputbox_layout = QHBoxLayout()
-        self.outputdirbtn = QPushButton("Select output directory")
-        self.output_path = QLineEdit()
-        outputbox_layout.addWidget(self.outputdirbtn)
-        outputbox_layout.addWidget(self.output_path)
-        self.outputdirbtn.clicked.connect(self._on_get_output_dir)
-        segmentation_layout.addLayout(outputbox_layout)
-
         ### Add widget for adding overview table
         self.table_btn = QPushButton("Show table")
         self.table_btn.clicked.connect(self._create_summary_table)
@@ -68,16 +59,6 @@ class SegmentationWidgets(QWidget):
         if self.layer_manager.selected_layer is not None:
             self.table_btn.setEnabled(True)
         segmentation_layout.addWidget(self.table_btn)
-
-        ## Add save labels widget
-        self.save_btn = QPushButton("Save labels")
-        self.save_btn.clicked.connect(self._save_labels)
-        segmentation_layout.addWidget(self.save_btn)
-
-        ## Add button to clear all layers
-        self.clear_btn = QPushButton("Clear all layers")
-        self.clear_btn.clicked.connect(self._clear_layers)
-        segmentation_layout.addWidget(self.clear_btn)
 
         ### Add widget for connected component labeling
         conn_comp_widget = ConnectedComponents(self.viewer, self.layer_manager)
@@ -216,82 +197,3 @@ class SegmentationWidgets(QWidget):
                 label_colors
             )
             self.label_plot_widget._update_dropdowns()
-
-    def _save_labels(self) -> None:
-        """Save the currently active labels layer. If it consists of multiple timepoints, they are written to multiple 3D stacks."""
-
-        if isinstance(self.layer_manager.selected_layer.data, da.core.Array):
-
-            if self.outputdir is None:
-                msg = QMessageBox()
-                msg.setWindowTitle("No output directory selected")
-                msg.setText("Please specify an output directory first!")
-                msg.setIcon(QMessageBox.Information)
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec_()
-                return False
-
-            else:
-                outputdir = os.path.join(
-                    self.outputdir, (self.layer_manager.selected_layer.name + "_finalresult")
-                )
-                if os.path.exists(outputdir):
-                    shutil.rmtree(outputdir)
-                os.mkdir(outputdir)
-
-                for i in range(
-                    self.layer_manager.selected_layer.data.shape[0]
-                ):  # Loop over the first dimension
-                    current_stack = self.layer_manager.selected_layer.data[
-                        i
-                    ].compute()  # Compute the current stack
-                    tifffile.imwrite(
-                        os.path.join(
-                            outputdir,
-                            (
-                                self.layer_manager.selected_layer.name
-                                + "_TP"
-                                + str(i).zfill(4)
-                                + ".tif"
-                            ),
-                        ),
-                        np.array(current_stack, dtype="uint16"),
-                    )
-                return True
-
-        elif len(self.layer_manager.selected_layer.data.shape) == 4:
-            filename, _ = QFileDialog.getSaveFileName(
-                caption="Save Labels",
-                directory="",
-                filter="TIFF files (*.tif *.tiff)",
-            )
-            for i in range(self.layer_manager.selected_layer.data.shape[0]):
-                labels_data = self.layer_manager.selected_layer.data[i].astype(np.uint16)
-                tifffile.imwrite(
-                    (
-                        filename.split(".tif")[0]
-                        + "_TP"
-                        + str(i).zfill(4)
-                        + ".tif"
-                    ),
-                    labels_data,
-                )
-
-        elif len(self.layer_manager.selected_layer.data.shape) == 3:
-            filename, _ = QFileDialog.getSaveFileName(
-                caption="Save Labels",
-                directory="",
-                filter="TIFF files (*.tif *.tiff)",
-            )
-
-            if filename:
-                labels_data = self.layer_manager.selected_layer.data.astype(np.uint16)
-                tifffile.imwrite(filename, labels_data)
-
-        else:
-            print("labels should be a 3D or 4D array")
-
-    def _clear_layers(self) -> None:
-        """Clear all the layers in the viewer"""
-
-        self.viewer.layers.clear()

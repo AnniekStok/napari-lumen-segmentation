@@ -11,11 +11,14 @@ from qtpy.QtWidgets import (
     QMessageBox,
 )
 
+from napari_orthogonal_views.ortho_view_manager import _get_manager
+
 from .distance.distance_widget import DistanceWidget
 from .layer_selection.layer_manager import LayerManager
 from .segmentation.widget import SegmentationWidgets
 from .skeleton.skeleton_widget import SkeletonWidget
 from .view3D import View3D
+from .layer_controls import LayerControlsWidget
 
 from napari.layers.labels._labels_utils import mouse_event_to_labels_coordinate
 from napari.layers.labels import _labels_mouse_bindings, Labels
@@ -73,13 +76,23 @@ class LumenSegmentationWidget(QWidget):
         tab_widget = QTabWidget(self)
         self.layer_manager = LayerManager(self.viewer)
 
-        ## add 3D viewing widget
-        view_3D_widget = View3D(self.viewer)
-        tab_widget.addTab(view_3D_widget, "3D Viewing")
+        ### Add layer controls widget
+        self.layer_controls = LayerControlsWidget(self.viewer, self.layer_manager)
+
+        ### activate orthogonal views and register custom function
+        def label_options_click_hook(orig_layer, copied_layer):
+            copied_layer.mouse_drag_callbacks.append(
+                lambda layer, event: self.layer_controls.copy_label_widget.sync_click(
+                    orig_layer, layer, event
+                )
+            )
+
+        orth_view_manager = _get_manager(self.viewer)
+        orth_view_manager.register_layer_hook(Labels, label_options_click_hook)
+        tab_widget.addTab(self.layer_controls, "Layer controls")
 
         ## add combined segmentation widgets and layer manager
         segmentation_layout = QVBoxLayout()
-        segmentation_layout.addWidget(self.layer_manager)
         segmentation_widgets = SegmentationWidgets(self.viewer, self.layer_manager)
         segmentation_layout.addWidget(segmentation_widgets)
         layer_manager_segmentation = QWidget()
