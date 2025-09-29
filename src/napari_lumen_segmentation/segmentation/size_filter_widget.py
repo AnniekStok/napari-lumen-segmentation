@@ -32,19 +32,19 @@ class SizeFilterWidget(QWidget):
         super().__init__()
 
         self.viewer = viewer
-        self.label_manager = label_manager
+        self.layer_manager = label_manager
         self.outputdir = None
 
         filterbox = QGroupBox("Filter objects by size")
 
         min_size_layout = QVBoxLayout()
-        min_size_layout.addWidget(QLabel('min size (voxels)'))
+        min_size_layout.addWidget(QLabel("min size (voxels)"))
         self.min_size_field = QSpinBox()
         self.min_size_field.setMaximum(1000000)
         min_size_layout.addWidget(self.min_size_field)
 
         max_size_layout = QVBoxLayout()
-        max_size_layout.addWidget(QLabel('max size (voxels)'))
+        max_size_layout.addWidget(QLabel("max size (voxels)"))
         self.max_size_field = QSpinBox()
         self.max_size_field.setMaximum(1000000)
         max_size_layout.addWidget(self.max_size_field)
@@ -68,22 +68,24 @@ class SizeFilterWidget(QWidget):
     def _delete_objects(self) -> None:
         """Delete objects in the selected layer that are too small or too big"""
 
-        if isinstance(self.label_manager.selected_layer.data, da.core.Array):
+        if isinstance(self.layer_manager.selected_layer.data, da.core.Array):
             if self.outputdir is None:
-                self.outputdir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+                self.outputdir = QFileDialog.getExistingDirectory(
+                    self, "Select Output Folder"
+                )
 
             outputdir = os.path.join(
                 self.outputdir,
-                (self.label_manager.selected_layer.name + "_sizefiltered"),
+                (self.layer_manager.selected_layer.name + "_sizefiltered"),
             )
             if os.path.exists(outputdir):
                 shutil.rmtree(outputdir)
             os.mkdir(outputdir)
 
             for i in range(
-                self.label_manager.selected_layer.data.shape[0]
+                self.layer_manager.selected_layer.data.shape[0]
             ):  # Loop over the first dimension
-                current_stack = self.label_manager.selected_layer.data[
+                current_stack = self.layer_manager.selected_layer.data[
                     i
                 ].compute()  # Compute the current stack
 
@@ -92,7 +94,10 @@ class SizeFilterWidget(QWidget):
                 filtered_labels = [
                     p.label
                     for p in props
-                    if (p.area >= self.min_size_field.value() and p.area <= self.max_size_field.value())
+                    if (
+                        p.area >= self.min_size_field.value()
+                        and p.area <= self.max_size_field.value()
+                    )
                 ]
                 mask = functools.reduce(
                     np.logical_or,
@@ -103,8 +108,8 @@ class SizeFilterWidget(QWidget):
                     os.path.join(
                         outputdir,
                         (
-                            self.label_manager.selected_layer.name
-                            + "_sizefiltered_TP"
+                            self.layer_manager.selected_layer.name
+                            + "_sizefiltered_slice"
                             + str(i).zfill(4)
                             + ".tif"
                         ),
@@ -117,73 +122,69 @@ class SizeFilterWidget(QWidget):
                 for fname in os.listdir(outputdir)
                 if fname.endswith(".tif")
             ]
-            self.label_manager.selected_layer = self.viewer.add_labels(
+            self.layer_manager.selected_layer = self.viewer.add_labels(
                 da.stack([imread(fname) for fname in sorted(file_list)]),
-                name=self.label_manager.selected_layer.name
-                + "_sizefiltered",
-            )
-            self.label_manager._update_labels(
-                self.label_manager.selected_layer.name
+                name=self.layer_manager.selected_layer.name + "_sizefiltered",
             )
 
         else:
             # Image data is a normal array and can be directly edited.
-            if len(self.label_manager.selected_layer.data.shape) == 4:
+            if len(self.layer_manager.selected_layer.data.shape) == 4:
                 stack = []
-                for i in range(
-                    self.label_manager.selected_layer.data.shape[0]
-                ):
+                for i in range(self.layer_manager.selected_layer.data.shape[0]):
                     props = measure.regionprops(
-                        self.label_manager.selected_layer.data[i]
+                        self.layer_manager.selected_layer.data[i]
                     )
                     filtered_labels = [
                         p.label
                         for p in props
-                        if (p.area >= self.min_size_field.value() and p.area <= self.max_size_field.value())
+                        if (
+                            p.area >= self.min_size_field.value()
+                            and p.area <= self.max_size_field.value()
+                        )
                     ]
                     mask = functools.reduce(
                         np.logical_or,
                         (
-                            self.label_manager.selected_layer.data[i] == val
+                            self.layer_manager.selected_layer.data[i] == val
                             for val in filtered_labels
                         ),
                     )
                     filtered = np.where(
-                        mask, self.label_manager.selected_layer.data[i], 0
+                        mask, self.layer_manager.selected_layer.data[i], 0
                     )
                     stack.append(filtered)
-                self.label_manager.selected_layer = self.viewer.add_labels(
+                self.layer_manager.selected_layer = self.viewer.add_labels(
                     np.stack(stack, axis=0),
-                    name=self.label_manager.selected_layer.name
-                    + "_sizefiltered",
+                    name=self.layer_manager.selected_layer.name + "_sizefiltered",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
-            elif len(self.label_manager.selected_layer.data.shape) == 3:
-                props = measure.regionprops(
-                    self.label_manager.selected_layer.data
-                )
+            elif len(self.layer_manager.selected_layer.data.shape) == 3:
+                props = measure.regionprops(self.layer_manager.selected_layer.data)
                 filtered_labels = [
                     p.label
                     for p in props
-                    if (p.area >= self.min_size_field.value() and p.area <= self.max_size_field.value())
+                    if (
+                        p.area >= self.min_size_field.value()
+                        and p.area <= self.max_size_field.value()
+                    )
                 ]
                 mask = functools.reduce(
                     np.logical_or,
                     (
-                        self.label_manager.selected_layer.data == val
+                        self.layer_manager.selected_layer.data == val
                         for val in filtered_labels
                     ),
                 )
-                self.label_manager.selected_layer = self.viewer.add_labels(
-                    np.where(mask, self.label_manager.selected_layer.data, 0),
-                    name=self.label_manager.selected_layer.name
-                    + "_sizefiltered",
+                self.layer_manager.selected_layer = self.viewer.add_labels(
+                    np.where(mask, self.layer_manager.selected_layer.data, 0),
+                    name=self.layer_manager.selected_layer.name + "_sizefiltered",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
             else:

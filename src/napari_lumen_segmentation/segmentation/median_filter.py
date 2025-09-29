@@ -30,7 +30,7 @@ class MedianFilter(QWidget):
         super().__init__()
 
         self.viewer = viewer
-        self.label_manager = label_manager
+        self.layer_manager = label_manager
         self.outputdir = None
 
         smoothbox = QGroupBox("Median filter")
@@ -57,13 +57,15 @@ class MedianFilter(QWidget):
     def _smooth_objects(self) -> None:
         """Smooth objects by using a median filter."""
 
-        if isinstance(self.label_manager.selected_layer.data, da.core.Array):
+        if isinstance(self.layer_manager.selected_layer.data, da.core.Array):
             if self.outputdir is None:
-                self.outputdir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+                self.outputdir = QFileDialog.getExistingDirectory(
+                    self, "Select Output Folder"
+                )
 
                 outputdir = os.path.join(
                     self.outputdir,
-                    (self.label_manager.selected_layer.name + "_median_filter"),
+                    (self.layer_manager.selected_layer.name + "_median_filter"),
                 )
                 if os.path.exists(outputdir):
                     shutil.rmtree(outputdir)
@@ -72,16 +74,16 @@ class MedianFilter(QWidget):
             else:
                 outputdir = os.path.join(
                     self.outputdir,
-                    (self.label_manager.selected_layer.name + "_median_filter"),
+                    (self.layer_manager.selected_layer.name + "_median_filter"),
                 )
                 if os.path.exists(outputdir):
                     shutil.rmtree(outputdir)
                 os.mkdir(outputdir)
 
             for i in range(
-                self.label_manager.selected_layer.data.shape[0]
+                self.layer_manager.selected_layer.data.shape[0]
             ):  # Loop over the first dimension
-                current_stack = self.label_manager.selected_layer.data[
+                current_stack = self.layer_manager.selected_layer.data[
                     i
                 ].compute()  # Compute the current stack
                 smoothed = ndimage.median_filter(
@@ -91,8 +93,8 @@ class MedianFilter(QWidget):
                     os.path.join(
                         outputdir,
                         (
-                            self.label_manager.selected_layer.name
-                            + "_median_filter_TP"
+                            self.layer_manager.selected_layer.name
+                            + "_median_filter_slice"
                             + str(i).zfill(4)
                             + ".tif"
                         ),
@@ -105,43 +107,38 @@ class MedianFilter(QWidget):
                 for fname in os.listdir(outputdir)
                 if fname.endswith(".tif")
             ]
-            self.label_manager.selected_layer = self.viewer.add_labels(
+            self.layer_manager.selected_layer = self.viewer.add_labels(
                 da.stack([imread(fname) for fname in sorted(file_list)]),
-                name=self.label_manager.selected_layer.name + "_median_filter",
-            )
-            self.label_manager._update_labels(
-                self.label_manager.selected_layer.name
+                name=self.layer_manager.selected_layer.name + "_median_filter",
             )
 
         else:
-            if len(self.label_manager.selected_layer.data.shape) == 4:
+            if len(self.layer_manager.selected_layer.data.shape) == 4:
                 stack = []
-                for i in range(
-                    self.label_manager.selected_layer.data.shape[0]
-                ):
+                for i in range(self.layer_manager.selected_layer.data.shape[0]):
                     smoothed = ndimage.median_filter(
-                        self.label_manager.selected_layer.data[i],
+                        self.layer_manager.selected_layer.data[i],
                         size=self.median_radius_field.value(),
                     )
                     stack.append(smoothed)
-                self.label_manager.selected_layer = self.viewer.add_labels(
+                self.layer_manager.selected_layer = self.viewer.add_labels(
                     np.stack(stack, axis=0),
-                    name=self.label_manager.selected_layer.name + "_median_filter",
+                    name=self.layer_manager.selected_layer.name + "_median_filter",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
-            elif len(self.label_manager.selected_layer.data.shape) == 3:
-                self.label_manager.selected_layer = self.viewer.add_labels(
+            elif len(self.layer_manager.selected_layer.data.shape) == 3:
+                self.layer_manager.selected_layer = self.viewer.add_labels(
                     ndimage.median_filter(
-                        self.label_manager.selected_layer.data,
+                        self.layer_manager.selected_layer.data,
                         size=self.median_radius_field.value(),
                     ),
-                    name=self.label_manager.selected_layer.name + "_median_filter",
+                    name=self.layer_manager.selected_layer.name + "_median_filter",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
             else:

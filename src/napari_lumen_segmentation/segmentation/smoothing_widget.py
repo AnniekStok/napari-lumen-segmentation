@@ -32,7 +32,7 @@ class SmoothingWidget(QWidget):
         super().__init__()
 
         self.viewer = viewer
-        self.label_manager = label_manager
+        self.layer_manager = label_manager
         self.outputdir = None
 
         smoothbox = QGroupBox("Smooth objects")
@@ -40,14 +40,14 @@ class SmoothingWidget(QWidget):
         smooth_layout = QHBoxLayout()
 
         radius_layout = QVBoxLayout()
-        radius_layout.addWidget(QLabel('Median filter radius'))
+        radius_layout.addWidget(QLabel("Median filter radius"))
         self.median_radius_field = QSpinBox()
         self.median_radius_field.setMaximum(100)
         radius_layout.addWidget(self.median_radius_field)
         smooth_layout.addLayout(radius_layout)
 
         iteration_layout = QVBoxLayout()
-        iteration_layout.addWidget(QLabel('n iterations'))
+        iteration_layout.addWidget(QLabel("n iterations"))
         self.n_iterations = QSpinBox()
         self.n_iterations.setMaximum(1)
         self.n_iterations.setMaximum(100)
@@ -68,13 +68,15 @@ class SmoothingWidget(QWidget):
     def _smooth_objects(self) -> None:
         """Smooth objects by using a median filter."""
 
-        if isinstance(self.label_manager.selected_layer.data, da.core.Array):
+        if isinstance(self.layer_manager.selected_layer.data, da.core.Array):
             if self.outputdir is None:
-                self.outputdir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+                self.outputdir = QFileDialog.getExistingDirectory(
+                    self, "Select Output Folder"
+                )
 
                 outputdir = os.path.join(
                     self.outputdir,
-                    (self.label_manager.selected_layer.name + "_smoothed"),
+                    (self.layer_manager.selected_layer.name + "_smoothed"),
                 )
                 if os.path.exists(outputdir):
                     shutil.rmtree(outputdir)
@@ -83,23 +85,23 @@ class SmoothingWidget(QWidget):
             else:
                 outputdir = os.path.join(
                     self.outputdir,
-                    (self.label_manager.selected_layer.name + "_smoothed"),
+                    (self.layer_manager.selected_layer.name + "_smoothed"),
                 )
                 if os.path.exists(outputdir):
                     shutil.rmtree(outputdir)
                 os.mkdir(outputdir)
 
             for i in range(
-                self.label_manager.selected_layer.data.shape[0]
+                self.layer_manager.selected_layer.data.shape[0]
             ):  # Loop over the first dimension
-                current_stack = self.label_manager.selected_layer.data[
+                current_stack = self.layer_manager.selected_layer.data[
                     i
                 ].compute()  # Compute the current stack
                 # Apply smoothing using median filter
                 smoothed = ndimage.median_filter(
-                        current_stack,
-                        size=self.median_radius_field.value(),
-                    )
+                    current_stack,
+                    size=self.median_radius_field.value(),
+                )
 
                 # combine smoothed result with original result to selectively grow the mask
                 mask = (smoothed != 0) & (current_stack == 0)
@@ -110,8 +112,8 @@ class SmoothingWidget(QWidget):
                     os.path.join(
                         outputdir,
                         (
-                            self.label_manager.selected_layer.name
-                            + "_smoothed_TP"
+                            self.layer_manager.selected_layer.name
+                            + "_smoothed_slice"
                             + str(i).zfill(4)
                             + ".tif"
                         ),
@@ -124,61 +126,56 @@ class SmoothingWidget(QWidget):
                 for fname in os.listdir(outputdir)
                 if fname.endswith(".tif")
             ]
-            self.label_manager.selected_layer = self.viewer.add_labels(
+            self.layer_manager.selected_layer = self.viewer.add_labels(
                 da.stack([imread(fname) for fname in sorted(file_list)]),
-                name=self.label_manager.selected_layer.name + "_smoothed",
-            )
-            self.label_manager._update_labels(
-                self.label_manager.selected_layer.name
+                name=self.layer_manager.selected_layer.name + "_smoothed",
             )
 
         else:
-            if len(self.label_manager.selected_layer.data.shape) == 4:
+            if len(self.layer_manager.selected_layer.data.shape) == 4:
                 stack = []
-                for i in range(
-                    self.label_manager.selected_layer.data.shape[0]
-                ):
+                for i in range(self.layer_manager.selected_layer.data.shape[0]):
                     # Apply smoothing using median filter
                     smoothed = ndimage.median_filter(
-                            self.label_manager.selected_layer.data[i],
-                            size=self.median_radius_field.value(),
-                        )
+                        self.layer_manager.selected_layer.data[i],
+                        size=self.median_radius_field.value(),
+                    )
 
                     # combine smoothed result with original result to selectively grow the mask
-                    mask = (smoothed != 0) & (self.label_manager.selected_layer.data[i] == 0)
-                    result = copy.deepcopy(self.label_manager.selected_layer.data[i])
+                    mask = (smoothed != 0) & (
+                        self.layer_manager.selected_layer.data[i] == 0
+                    )
+                    result = copy.deepcopy(self.layer_manager.selected_layer.data[i])
                     result[mask] = smoothed[mask]
 
                     stack.append(result)
-                self.label_manager.selected_layer = self.viewer.add_labels(
+                self.layer_manager.selected_layer = self.viewer.add_labels(
                     np.stack(stack, axis=0),
-                    name=self.label_manager.selected_layer.name + "_smoothed",
+                    name=self.layer_manager.selected_layer.name + "_smoothed",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
-            elif len(self.label_manager.selected_layer.data.shape) == 3:
-
-                input_data = copy.deepcopy(self.label_manager.selected_layer.data)
+            elif len(self.layer_manager.selected_layer.data.shape) == 3:
+                input_data = copy.deepcopy(self.layer_manager.selected_layer.data)
                 for _ in range(self.n_iterations.value()):
-
                     # Apply smoothing using median filter
                     smoothed = ndimage.median_filter(
-                            input_data,
-                            size=self.median_radius_field.value(),
-                        )
+                        input_data,
+                        size=self.median_radius_field.value(),
+                    )
 
                     # combine smoothed result with original result to selectively grow the mask
-                    mask = (input_data == 0) & (smoothed != 0)                   
+                    mask = (input_data == 0) & (smoothed != 0)
                     input_data[mask] = smoothed[mask]
 
-                self.label_manager.selected_layer = self.viewer.add_labels(
+                self.layer_manager.selected_layer = self.viewer.add_labels(
                     input_data,
-                    name=self.label_manager.selected_layer.name + "_smoothed",
+                    name=self.layer_manager.selected_layer.name + "_smoothed",
                 )
-                self.label_manager._update_labels(
-                    self.label_manager.selected_layer.name
+                self.layer_manager._update_labels(
+                    self.layer_manager.selected_layer.name
                 )
 
             else:

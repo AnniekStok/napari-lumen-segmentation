@@ -34,9 +34,7 @@ class ThresholdWidget(QWidget):
         threshold_box = QGroupBox("Threshold")
         threshold_box_layout = QVBoxLayout()
 
-        self.threshold_layer_dropdown = LayerDropdown(
-            self.viewer, (Image, Labels)
-        )
+        self.threshold_layer_dropdown = LayerDropdown(self.viewer, (Image, Labels))
         self.threshold_layer_dropdown.layer_changed.connect(
             self._update_threshold_layer
         )
@@ -81,7 +79,9 @@ class ThresholdWidget(QWidget):
 
         if isinstance(self.threshold_layer.data, da.core.Array):
             if self.outputdir is None:
-                self.outputdir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+                self.outputdir = QFileDialog.getExistingDirectory(
+                    self, "Select Output Folder"
+                )
 
             outputdir = os.path.join(
                 self.outputdir,
@@ -98,16 +98,16 @@ class ThresholdWidget(QWidget):
                     i
                 ].compute()  # Compute the current stack
 
-                thresholded = (
-                    data >= int(self.min_threshold.value())
-                ) & (data <= int(self.max_threshold.value()))
+                thresholded = (data >= int(self.min_threshold.value())) & (
+                    data <= int(self.max_threshold.value())
+                )
 
                 tifffile.imwrite(
                     os.path.join(
                         outputdir,
                         (
                             self.threshold_layer.name
-                            + "_thresholded_TP"
+                            + "_thresholded_slice"
                             + str(i).zfill(4)
                             + ".tif"
                         ),

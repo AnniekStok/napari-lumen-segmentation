@@ -2,30 +2,23 @@
 Napari plugin widget for editing N-dimensional label data
 """
 
-
 import napari
+from napari.layers.labels import Labels, _labels_mouse_bindings
+from napari.layers.labels._labels_utils import mouse_event_to_labels_coordinate
+from napari_orthogonal_views.ortho_view_manager import _get_manager
 from qtpy.QtWidgets import (
+    QMessageBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
-    QMessageBox,
 )
 
-from napari_orthogonal_views.ortho_view_manager import _get_manager
-
 from .distance.distance_widget import DistanceWidget
+from .layer_controls import LayerControlsWidget
 from .layer_selection.layer_manager import LayerManager
 from .segmentation.widget import SegmentationWidgets
 from .skeleton.skeleton_widget import SkeletonWidget
-from .view3D import View3D
-from .layer_controls import LayerControlsWidget
 
-from napari.layers.labels._labels_utils import mouse_event_to_labels_coordinate
-from napari.layers.labels import _labels_mouse_bindings, Labels
-
-from napari.layers.labels import Labels, _labels_mouse_bindings
-from napari.layers.labels._labels_utils import mouse_event_to_labels_coordinate
-from qtpy.QtWidgets import QMessageBox
 
 def patch_draw_behavior():
     # Skip if already patched
@@ -67,6 +60,8 @@ def patch_draw_behavior():
     for mode, func in Labels._drag_modes.items():
         if func is original_draw_fn:
             Labels._drag_modes[mode] = custom_draw
+
+
 class LumenSegmentationWidget(QWidget):
     """Widget for manual correction of label data, for example to prepare ground truth data for training a segmentation model"""
 
