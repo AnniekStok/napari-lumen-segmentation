@@ -1,14 +1,17 @@
 import napari
 from napari_plane_sliders import PlaneSliderWidget
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
     QWidget,
 )
-from qtpy.QtCore import Qt
-from .copy_label_widget import CopyLabelWidget
+
 from napari_lumen_segmentation.layer_selection.layer_manager import LayerManager
+
+from .copy_label_widget import CopyLabelWidget
 from .save_labels_widget import SaveLabelsWidget
+
 
 class LayerControlsWidget(QWidget):
     """Widget showing region props as a table and plot widget"""

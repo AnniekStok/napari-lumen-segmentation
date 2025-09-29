@@ -6,10 +6,10 @@ from qtpy.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QMessageBox,
 )
 from skimage.morphology import reconstruction
 
@@ -28,7 +28,9 @@ class MorphReconstructionWidget(QWidget):
 
         int_layout = QHBoxLayout()
         input_image_label = QLabel("Input image")
-        input_image_label.setToolTip("Intensity image to apply threshold on before reconstruction")
+        input_image_label.setToolTip(
+            "Intensity image to apply threshold on before reconstruction"
+        )
         int_layout.addWidget(input_image_label)
         self.int_input_dropdown = LayerDropdown(self.viewer, (Image))
         self.int_input_dropdown.layer_changed.connect(self._update_int_input)
@@ -44,7 +46,9 @@ class MorphReconstructionWidget(QWidget):
 
         mask_layout = QHBoxLayout()
         mask_label = QLabel("Mask region to expand into")
-        mask_label.setToolTip("Mask region to expand into. Use different label values to provide multiple local masks for reconstruction.")
+        mask_label.setToolTip(
+            "Mask region to expand into. Use different label values to provide multiple local masks for reconstruction."
+        )
         mask_layout.addWidget(mask_label)
         self.mask_dropdown = LayerDropdown(self.viewer, (Labels))
         self.mask_dropdown.layer_changed.connect(self._update_mask)
@@ -69,9 +73,7 @@ class MorphReconstructionWidget(QWidget):
         max_threshold_layout.addWidget(self.max_threshold)
 
         run_region_growing_btn = QPushButton("Run")
-        run_region_growing_btn.clicked.connect(
-            self._morphological_reconstruction
-        )
+        run_region_growing_btn.clicked.connect(self._morphological_reconstruction)
 
         box_layout.addLayout(int_layout)
         box_layout.addLayout(seeds_layout)
@@ -118,22 +120,29 @@ class MorphReconstructionWidget(QWidget):
         # do not execute if the two layers are the same
         if self.seeds_layer == self.mask:
             msg = QMessageBox()
-            msg.setWindowTitle("Seeds and mask layers are the same. Please select different layers.")
-            msg.setText("Seeds and mask layers are the same. Please select different layers. The seeds layer is the lumen that you are trying to correct. The mask should be a labels layer with one or more regions to expand into.")
+            msg.setWindowTitle(
+                "Seeds and mask layers are the same. Please select different layers."
+            )
+            msg.setText(
+                "Seeds and mask layers are the same. Please select different layers. The seeds layer is the lumen that you are trying to correct. The mask should be a labels layer with one or more regions to expand into."
+            )
             msg.setIcon(QMessageBox.Information)
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
-            return 
-   
-        updated_seeds = self.seeds_layer.data.copy() > 0
-        
-        region_labels = np.unique(self.mask.data)
-        region_labels = [l for l in region_labels if l > 0]
-        for label in region_labels:
+            return
 
+        updated_seeds = self.seeds_layer.data.copy() > 0
+
+        region_labels = np.unique(self.mask.data)
+        region_labels = [label for label in region_labels if label > 0]
+        for label in region_labels:
             # define a mask of pixels that fulfill both the threshold criteria and are in the 'mask' layer
-            mask = (self.region_growing_int_layer.data >= self.min_threshold.value()) & (self.region_growing_int_layer.data <= self.max_threshold.value()) & (self.mask.data == label)
-            
+            mask = (
+                (self.region_growing_int_layer.data >= self.min_threshold.value())
+                & (self.region_growing_int_layer.data <= self.max_threshold.value())
+                & (self.mask.data == label)
+            )
+
             # Find the bounding box of the non-zero pixels in the mask
             non_zero_coords = np.argwhere(mask)
             if non_zero_coords.size == 0:
@@ -141,22 +150,32 @@ class MorphReconstructionWidget(QWidget):
                 return
 
             min_coords = non_zero_coords.min(axis=0)
-            max_coords = non_zero_coords.max(axis=0) + 1  # Add 1 to include the max boundary
+            max_coords = (
+                non_zero_coords.max(axis=0) + 1
+            )  # Add 1 to include the max boundary
 
             # Clip the mask and seeds to the bounding box
-            clipped_mask = mask[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]]
+            clipped_mask = mask[
+                min_coords[0] : max_coords[0], min_coords[1] : max_coords[1]
+            ]
             seeds = (self.seeds_layer.data > 0) & (mask > 0)
-            clipped_seeds = seeds[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]]
+            clipped_seeds = seeds[
+                min_coords[0] : max_coords[0], min_coords[1] : max_coords[1]
+            ]
 
             # Run the reconstruction function on the clipped data
-            reconst = reconstruction(clipped_seeds.astype(int), clipped_mask.astype(int))
+            reconst = reconstruction(
+                clipped_seeds.astype(int), clipped_mask.astype(int)
+            )
             result = np.logical_or(clipped_seeds, reconst > 0).astype(bool)
 
             # Put the updated pixels in the updated_seeds array
-            updated_seeds[min_coords[0]:max_coords[0], min_coords[1]:max_coords[1]] |= result
+            updated_seeds[
+                min_coords[0] : max_coords[0], min_coords[1] : max_coords[1]
+            ] |= result
 
         # Add the updated seeds layer to the viewer
-        self.seeds_layer = self.viewer.add_labels(updated_seeds, name="morphological reconstruction")
+        self.seeds_layer = self.viewer.add_labels(
+            updated_seeds, name="morphological reconstruction"
+        )
         self.seeds_dropdown.setCurrentText("morphological reconstruction")
-       
-

@@ -2,20 +2,13 @@
 Collection of segmentation related widgets
 """
 
-import os
-import shutil
-
 import dask.array as da
 import napari
 import numpy as np
 import pandas as pd
-import tifffile
 from matplotlib.colors import ListedColormap, to_rgb
 from qtpy.QtWidgets import (
     QFileDialog,
-    QHBoxLayout,
-    QLineEdit,
-    QMessageBox,
     QPushButton,
     QScrollArea,
     QTabWidget,
@@ -40,7 +33,9 @@ from .threshold_widget import ThresholdWidget
 class SegmentationWidgets(QWidget):
     """Widget for manual correction of label data, for example to prepare ground truth data for training a segmentation model"""
 
-    def __init__(self, viewer: "napari.viewer.Viewer", layer_manager: LayerManager) -> None:
+    def __init__(
+        self, viewer: "napari.viewer.Viewer", layer_manager: LayerManager
+    ) -> None:
         super().__init__()
         self.viewer = viewer
         self.layer_manager = layer_manager
@@ -53,9 +48,7 @@ class SegmentationWidgets(QWidget):
         ### Add widget for adding overview table
         self.table_btn = QPushButton("Show table")
         self.table_btn.clicked.connect(self._create_summary_table)
-        self.table_btn.clicked.connect(
-            lambda: self.tab_widget.setCurrentIndex(1)
-        )
+        self.table_btn.clicked.connect(lambda: self.tab_widget.setCurrentIndex(1))
         if self.layer_manager.selected_layer is not None:
             self.table_btn.setEnabled(True)
         segmentation_layout.addWidget(self.table_btn)
@@ -69,9 +62,7 @@ class SegmentationWidgets(QWidget):
         segmentation_layout.addWidget(size_filter_widget)
 
         ### Add widget for eroding/dilating labels
-        erode_dilate_widget = ErosionDilationWidget(
-            self.viewer, self.layer_manager
-        )
+        erode_dilate_widget = ErosionDilationWidget(self.viewer, self.layer_manager)
         segmentation_layout.addWidget(erode_dilate_widget)
 
         ### Threshold image
@@ -111,9 +102,7 @@ class SegmentationWidgets(QWidget):
         self.label_plotting_widgets_layout = QVBoxLayout()
         self.label_plotting_widgets_layout.addWidget(self.label_table_widget)
         self.label_plotting_widgets_layout.addWidget(self.label_plot_widget)
-        self.label_plotting_widgets.setLayout(
-            self.label_plotting_widgets_layout
-        )
+        self.label_plotting_widgets.setLayout(self.label_plotting_widgets_layout)
 
         ## Combine tabs
         self.tab_widget.addTab(scroll_area, "Segmentation Tools")
@@ -162,7 +151,8 @@ class SegmentationWidgets(QWidget):
 
             elif len(self.layer_manager.selected_layer.data.shape) == 3:
                 self.label_table = measure.regionprops_table(
-                    self.layer_manager.selected_layer.data, properties=["label", "area", "centroid"]
+                    self.layer_manager.selected_layer.data,
+                    properties=["label", "area", "centroid"],
                 )
                 if hasattr(self.layer_manager.selected_layer, "properties"):
                     self.layer_manager.selected_layer.properties = self.label_table
@@ -181,19 +171,14 @@ class SegmentationWidgets(QWidget):
             )
             self.label_table_widget._set_label_colors_to_rows()
             self.label_table_widget.setMinimumWidth(500)
-            self.label_plotting_widgets_layout.addWidget(
-                self.label_table_widget
-            )
+            self.label_plotting_widgets_layout.addWidget(self.label_table_widget)
 
             # update the plot widget and set label colors
-            self.label_plot_widget.props = pd.DataFrame.from_dict(
-                self.label_table
-            )
+            self.label_plot_widget.props = pd.DataFrame.from_dict(self.label_table)
             unique_labels = self.label_plot_widget.props["label"].unique()
             label_colors = [
-                to_rgb(self.layer_manager.selected_layer.get_color(label)) for label in unique_labels
+                to_rgb(self.layer_manager.selected_layer.get_color(label))
+                for label in unique_labels
             ]
-            self.label_plot_widget.label_colormap = ListedColormap(
-                label_colors
-            )
+            self.label_plot_widget.label_colormap = ListedColormap(label_colors)
             self.label_plot_widget._update_dropdowns()
