@@ -2,16 +2,12 @@
 requires = ["setuptools>=42.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
-
-[tool.black]
-line-length = 79
-target-version = ['py38', 'py39', 'py310']
-
-
 [tool.ruff]
-line-length = 79
-select = [
+line-length = 88
+target-version = "py310"
+fix = true
+
+lint.select = [
     "E", "F", "W", #flake8
     "UP", # pyupgrade
     "I", # isort
@@ -24,11 +20,20 @@ select = [
     "PIE", # flake8-pie
     "SIM", # flake8-simplify
 ]
-ignore = [
-    "E501", # line too long. let black handle this
+
+lint.ignore = [
     "UP006", "UP007", # type annotation. As using magicgui require runtime type annotation then we disable this.
-    "SIM117", # flake8-simplify - some of merged with statements are not looking great with black, reanble after drop python 3.9
+    "ISC001", # implicit string concatenation
+    "E501", # line too long
 ]
+
+lint.per-file-ignores = { "scripts/*.py" = ["F"] }
+
+# https://docs.astral.sh/ruff/formatter/
+[tool.ruff.format]
+
+[tool.mypy]
+ignore_missing_imports = true
 
 exclude = [
     ".bzr",
