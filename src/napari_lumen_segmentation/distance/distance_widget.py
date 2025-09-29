@@ -52,6 +52,15 @@ class DistanceWidget(QScrollArea):
         geodesic_distmap_box = QGroupBox("Compute geodesic distance map")
         geodesic_distmap_box_layout = QVBoxLayout()
 
+        explanation = QLabel(
+            "Compute the geodesic distance of a marker point or object on the mask. If a single point is provided, the distance map will be calculated to that point. If more than two points are provided, the geodesic path distance between each pair of points is computed."
+        )
+        font = explanation.font()
+        font.setItalic(True)
+        explanation.setFont(font)
+        explanation.setWordWrap(True)
+        geodesic_distmap_box_layout.addWidget(explanation)
+
         geodesic_distmap_mask_layout = QHBoxLayout()
         geodesic_distmap_mask_layout.addWidget(QLabel("Mask image"))
         self.geodesic_distmap_mask_dropdown = LayerDropdown(self.viewer, (Labels))
