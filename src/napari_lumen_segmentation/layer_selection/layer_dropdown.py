@@ -1,16 +1,19 @@
 import napari
 from napari.utils.events import Event
-from PyQt5.QtCore import pyqtSignal
+from psygnal import Signal
 from qtpy.QtWidgets import QComboBox
 
 
 class LayerDropdown(QComboBox):
     """QComboBox widget with functions for updating the selected layer and to update the list of options when the list of layers is modified."""
 
-    layer_changed = pyqtSignal(str)  # signal to emit the selected layer name
+    layer_changed = Signal(str)  # signal to emit the selected layer name
 
     def __init__(
-        self, viewer: napari.Viewer, layer_type: tuple, allow_none: bool = False
+        self,
+        viewer: napari.Viewer,
+        layer_type: tuple,
+        allow_none: bool = False,
     ):
         super().__init__()
         self.viewer = viewer
@@ -20,7 +23,9 @@ class LayerDropdown(QComboBox):
         self.viewer.layers.events.inserted.connect(self._on_insert)
         self.viewer.layers.events.changed.connect(self._update_dropdown)
         self.viewer.layers.events.removed.connect(self._update_dropdown)
-        self.viewer.layers.selection.events.changed.connect(self._on_selection_changed)
+        self.viewer.layers.selection.events.changed.connect(
+            self._on_selection_changed
+        )
         self.currentTextChanged.connect(self._emit_layer_changed)
         self._update_dropdown()
 

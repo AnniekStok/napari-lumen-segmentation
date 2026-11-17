@@ -1,13 +1,14 @@
 import napari
 from napari_plane_sliders import PlaneSliderWidget
-from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
     QWidget,
 )
 
-from napari_lumen_segmentation.layer_selection.layer_manager import LayerManager
+from napari_lumen_segmentation.layer_selection.layer_manager import (
+    LayerManager,
+)
 
 from .copy_label_widget import CopyLabelWidget
 from .save_labels_widget import SaveLabelsWidget
@@ -45,6 +46,6 @@ class LayerControlsWidget(QWidget):
         save_labels = SaveLabelsWidget(self.viewer, self.layer_manager)
         layout.addWidget(save_labels)
 
-        layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        layout.addStretch(0)
 
         self.setLayout(layout)

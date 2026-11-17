@@ -8,7 +8,7 @@ import napari
 import numpy as np
 import pandas as pd
 from napari.layers import Labels, Points
-from PyQt5.QtGui import QColor
+from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
@@ -63,11 +63,15 @@ class DistanceWidget(QScrollArea):
 
         geodesic_distmap_mask_layout = QHBoxLayout()
         geodesic_distmap_mask_layout.addWidget(QLabel("Mask image"))
-        self.geodesic_distmap_mask_dropdown = LayerDropdown(self.viewer, (Labels))
+        self.geodesic_distmap_mask_dropdown = LayerDropdown(
+            self.viewer, (Labels)
+        )
         self.geodesic_distmap_mask_dropdown.layer_changed.connect(
             self._update_geodesic_distmap_mask
         )
-        geodesic_distmap_mask_layout.addWidget(self.geodesic_distmap_mask_dropdown)
+        geodesic_distmap_mask_layout.addWidget(
+            self.geodesic_distmap_mask_dropdown
+        )
 
         geodesic_distmap_marker_layer_layout = QHBoxLayout()
         geodesic_distmap_marker_layer_layout.addWidget(QLabel("Marker points"))
@@ -85,7 +89,9 @@ class DistanceWidget(QScrollArea):
         geodesic_distmap_btn.clicked.connect(self._calculate_geodesic_distance)
 
         geodesic_distmap_box_layout.addLayout(geodesic_distmap_mask_layout)
-        geodesic_distmap_box_layout.addLayout(geodesic_distmap_marker_layer_layout)
+        geodesic_distmap_box_layout.addLayout(
+            geodesic_distmap_marker_layer_layout
+        )
         geodesic_distmap_box_layout.addWidget(geodesic_distmap_btn)
 
         geodesic_distmap_box.setLayout(geodesic_distmap_box_layout)
@@ -100,7 +106,9 @@ class DistanceWidget(QScrollArea):
         distance_analysis_layout.addWidget(distance_measurement_box)
 
         ### Map points to closest point on mask image
-        points_to_mask_box = QGroupBox("Map points to closest point on mask image")
+        points_to_mask_box = QGroupBox(
+            "Map points to closest point on mask image"
+        )
         points_to_mask_box_layout = QVBoxLayout()
 
         points_layout = QHBoxLayout()
@@ -164,17 +172,25 @@ class DistanceWidget(QScrollArea):
         if selected_layer == "":
             self.geodesic_distmap_mask_layer = None
         else:
-            self.geodesic_distmap_mask_layer = self.viewer.layers[selected_layer]
+            self.geodesic_distmap_mask_layer = self.viewer.layers[
+                selected_layer
+            ]
             self.geodesic_distmap_mask_dropdown.setCurrentText(selected_layer)
 
-    def _update_geodesic_distmap_marker_layer(self, selected_layer: str) -> None:
+    def _update_geodesic_distmap_marker_layer(
+        self, selected_layer: str
+    ) -> None:
         """Set the marker layer for geodesic distance map calculation"""
 
         if selected_layer == "":
             self.geodesic_distmap_marker_layer = None
         else:
-            self.geodesic_distmap_marker_layer = self.viewer.layers[selected_layer]
-            self.geodesic_distmap_marker_layer_dropdown.setCurrentText(selected_layer)
+            self.geodesic_distmap_marker_layer = self.viewer.layers[
+                selected_layer
+            ]
+            self.geodesic_distmap_marker_layer_dropdown.setCurrentText(
+                selected_layer
+            )
 
     def _calculate_geodesic_distance(self):
         """Run geodesic distance map computation"""
@@ -203,9 +219,11 @@ class DistanceWidget(QScrollArea):
         elif isinstance(self.geodesic_distmap_marker_layer, Points):
             if len(self.geodesic_distmap_marker_layer.data) == 1:
                 mask2 = self.geodesic_distmap_mask_layer.data.copy() > 0
-                mask2[tuple(self.geodesic_distmap_marker_layer.data[0].astype(int))] = (
-                    False
-                )
+                mask2[
+                    tuple(
+                        self.geodesic_distmap_marker_layer.data[0].astype(int)
+                    )
+                ] = False
                 self.viewer.add_image(
                     np.array(
                         dip.GeodesicDistanceTransform(
@@ -261,8 +279,12 @@ class DistanceWidget(QScrollArea):
                         "point2.x": point2[0],
                         "point2.y": point2[1],
                         "point2.z": point2[2],
-                        "point1.color": point1_color[:3],  # Use only RGB components
-                        "point2.color": point2_color[:3],  # Use only RGB components
+                        "point1.color": point1_color[
+                            :3
+                        ],  # Use only RGB components
+                        "point2.color": point2_color[
+                            :3
+                        ],  # Use only RGB components
                         "euclidean_dist": euclidean_dist,
                         "geodesic_dist": geodesic_dist,
                     }
@@ -271,11 +293,13 @@ class DistanceWidget(QScrollArea):
                         [measurements, pd.DataFrame([measurement_dict])]
                     )
 
-                self.table_widget.set_content(measurements.to_dict(orient="list"))
+                self.table_widget.set_content(
+                    measurements.to_dict(orient="list")
+                )
 
                 # Iterate over all rows in the QTableWidget
                 i = 0
-                for index, row in measurements.iterrows():
+                for _, row in measurements.iterrows():
                     point1_color = row["point1.color"]
                     point2_color = row["point2.color"]
 
@@ -302,12 +326,14 @@ class DistanceWidget(QScrollArea):
                             )
                         )
 
-                    i += 1
+                    i += 1  # noqa
 
                 # also set colormap to the points
                 colors = [
                     colormap(i)
-                    for i in range(len(self.geodesic_distmap_marker_layer.data))
+                    for i in range(
+                        len(self.geodesic_distmap_marker_layer.data)
+                    )
                 ]
 
                 self.geodesic_distmap_marker_layer.edge_color = colors
@@ -317,5 +343,6 @@ class DistanceWidget(QScrollArea):
         """Calculates local thickness of label image and adds the image to the viewer"""
 
         self.viewer.add_image(
-            lt.local_thickness(self.layer_manager.selected_layer.data), colormap="magma"
+            lt.local_thickness(self.layer_manager.selected_layer.data),
+            colormap="magma",
         )
